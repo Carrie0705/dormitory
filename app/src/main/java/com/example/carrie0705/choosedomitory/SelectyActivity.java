@@ -40,7 +40,7 @@ import bean.Student;
 
 public class SelectyActivity extends AppCompatActivity implements View.OnClickListener{
     private static final int STUNUM_SUCCESS =1;
-    private static final int DORM_SELECT_INFOMATION = 2;
+    private static final int DORM_SELECT_INFOMATION = 3;
     private Spinner buildingSP,stuSP;
     private ArrayList<String> stuNum,buildingNum;
     private ArrayAdapter<String> stuAdapter,buildAdapter;
@@ -318,6 +318,8 @@ public class SelectyActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     public void onClick(View v) {
         if(v.getId() == R.id.submit){
+            //String json = getJson();
+            //Log.d("select",json);
             SelectRoom(getJson());
         }
     }
@@ -327,8 +329,9 @@ public class SelectyActivity extends AppCompatActivity implements View.OnClickLi
         stuID3 = (EditText) findViewById(R.id.stuId3);
 
         stuVcode1 = (EditText) findViewById(R.id.stuvcodeEdit1);
-        stuVcode2 = (EditText) findViewById(R.id.stuvcodeText2);
-        stuVcode3 = (EditText) findViewById(R.id.stuvcodeText3);
+        stuVcode2 = (EditText) findViewById(R.id.stuvcodeEdit2);
+        stuVcode3 = (EditText) findViewById(R.id.stuvcodeEdit3);
+
 
         String id2 = stuID1.getText().toString();
         String id3 = stuID2.getText().toString();
@@ -360,29 +363,34 @@ public class SelectyActivity extends AppCompatActivity implements View.OnClickLi
         new Thread(new Runnable() {
             @Override
             public void run() {
-                HttpURLConnection conn = null;
-                int errorCode = -1;
-
+                HttpURLConnection con = null;
                 // Create a trust manager that does not validate certificate chains
-                TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager(){
-                    public X509Certificate[] getAcceptedIssuers(){return null;}
-                    public void checkClientTrusted(X509Certificate[] certs, String authType){}
-                    public void checkServerTrusted(X509Certificate[] certs, String authType){}
+                TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
                 }};
+                int errorCode = -1;
                 try {
                     //MyX509TrustManager.allowAllSSL();
                     URL url = new URL(address);
-                    conn = (HttpURLConnection) url.openConnection();
-                    conn.setDoOutput(true);
-                    conn.setRequestMethod("POST");
-                    conn.setConnectTimeout(4000);
+                    con = (HttpURLConnection) url.openConnection();
+                    con.setDoOutput(true);
+                    con.setRequestMethod("POST");
+                    con.setConnectTimeout(4000);
 
-                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(conn.getOutputStream(), "utf-8");
+                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(con.getOutputStream(), "utf-8");
                     BufferedWriter bufferedWriter = new BufferedWriter(outputStreamWriter);
                     bufferedWriter.write(jsondata);
                     bufferedWriter.flush();
 
-                    InputStream inputStream = conn.getInputStream();
+                    InputStream inputStream = con.getInputStream();
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
                     StringBuilder response = new StringBuilder();
@@ -399,12 +407,16 @@ public class SelectyActivity extends AppCompatActivity implements View.OnClickLi
                     errorCode = getErrorCode(responseStr);
                     Log.d("select", errorCode+" errorCode");
 
-                    Message message = new Message();
-                    message.what = DORM_SELECT_INFOMATION;
-                    message.obj = errorCode;
-                    mHandler.sendMessage(message);
+                    Message msg2 = new Message();
+                    msg2.what = DORM_SELECT_INFOMATION;
+                    msg2.obj = errorCode;
+                    mHandler.sendMessage(msg2);
                 } catch (Exception e) {
                     e.printStackTrace();
+                }finally {
+                    if(con != null){
+                        con.disconnect();
+                    }
                 }
             }
         }).start();
@@ -426,16 +438,17 @@ public class SelectyActivity extends AppCompatActivity implements View.OnClickLi
     public void feedback(int errorcode){
         if (errorcode == 0) {
             if(Integer.parseInt(stuid) %2 !=0){
+                Toast.makeText(SelectyActivity.this, "选择宿舍失败", Toast.LENGTH_LONG).show();
                 Intent intent = new Intent(this, UserMessageActivity.class);
                 intent.putExtra("stuid", stuid);
-                startActivity(intent);
+                startActivityForResult(intent,1);
 
             }else{
                 Toast.makeText(SelectyActivity.this, "选择宿舍成功", Toast.LENGTH_LONG).show();
                 Log.d("select", "成功");
                 Intent intent = new Intent(this, UserMessageActivity.class);
                 intent.putExtra("stuid", stuid);
-                startActivity(intent);
+                startActivityForResult(intent,1);
             }
 
         } else if (errorcode == 40001) {

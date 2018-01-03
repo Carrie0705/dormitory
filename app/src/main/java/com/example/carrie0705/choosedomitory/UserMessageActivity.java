@@ -57,10 +57,6 @@ public class UserMessageActivity extends AppCompatActivity implements View.OnCli
 
         Intent intent = this.getIntent();
         String stuid = intent.getStringExtra("stuid");
-        String page = intent.getStringExtra("page");
-        if(page.equals("select")){
-            enterB.setVisibility(View.INVISIBLE);
-        }
         getStuInformation(stuid);
     }
     @Override
@@ -71,7 +67,7 @@ public class UserMessageActivity extends AppCompatActivity implements View.OnCli
                 Intent i = new Intent(this, SelectyActivity.class);
                 i.putExtra("stuid", stuidForIntent);
                 i.putExtra("gender", gender);
-                startActivity(i);
+                startActivityForResult(i,1);
             }else{
                 Toast.makeText(UserMessageActivity.this,"无需选择宿舍",Toast.LENGTH_SHORT).show();
             }
